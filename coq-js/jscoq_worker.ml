@@ -235,8 +235,15 @@ let jscoq_execute =
           | Some ((prefix, module_names)) ->
             out_fn @@ Pending (newid, prefix, module_names)
           | _ ->
-            let loc,_tip_info,ndoc = Jscoq_doc.add ~doc:!doc ~ontop ~newid stm in
-            doc := ndoc; out_fn @@ Added (newid,loc)
+            let loc, new_st, _tip_info,ndoc = Jscoq_doc.add ~doc:!doc ~ontop ~newid stm in
+            if Stateid.equal newid new_st
+            then
+              (doc := ndoc; out_fn @@ Added (newid,loc))
+            else               (* workaround #129 *)
+              (let cids, ndoc = Jscoq_doc.cancel ~doc:!doc new_st in
+               doc := ndoc;
+               out_fn @@ Cancelled (newid::cids)
+              )
         with exn ->
           let CoqExn(loc,_,msg) as exn_info = coq_exn_info exn [@@warning "-8"] in
           out_fn @@ Feedback { doc_id = 0; span_id = newid; route = 0; contents = Message(Error, loc, msg ) };

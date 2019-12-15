@@ -87,7 +87,7 @@ let add ~doc ~ontop ~newid stm =
   let east = Option.get Stm.(parse_sentence ~doc ~entry ontop pa) in
   let ndoc, new_st, foc = Stm.add ~doc ~ontop ~newtip:newid verb east in
   let new_sdoc = new_st :: sdoc in
-  east.CAst.loc, foc, (ndoc,new_sdoc)
+  east.CAst.loc, new_st, foc, (ndoc,new_sdoc)
 
 let query ~doc ~at ~route query =
   let doc, sdoc = doc in
