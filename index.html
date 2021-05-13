@@ -127,6 +127,16 @@
   <div>
     <textarea id="addnC" >
 From Coq Require Import ssreflect ssrfun ssrbool.
+
+Goal forall X : Type, X. Admitted.
+
+Lemma addnC n m : n + m = m + n.
+Proof.
+induction n.
+  now trivial.
+now simpl; rewrite IHn.
+Qed.
+
 From mathcomp Require Import eqtype ssrnat div prime. </textarea>
   </div>
   <div>
