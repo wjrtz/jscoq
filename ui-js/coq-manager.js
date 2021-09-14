@@ -824,12 +824,12 @@ class CoqManager {
         // Set startup parameters
         let init_opts = {
                 implicit_libs: this.options.implicit_libs,
-                coq_options: this._parseOptions(this.options.coq || {}),
-                debug: {coq: true, stm: true},
-                lib_path: this.getLoadPath()
+                lib_path: this.getLoadPath(),                        
+                debug: {coq: false, stm: false}
             },
             doc_opts = {
-                lib_init: this.options.prelude ? [PKG_ALIASES.prelude] : []
+                lib_init: this.options.prelude ? [PKG_ALIASES.prelude] : [],
+                coq_options: this._parseOptions(this.options.coq || {})
             };
 
         for (let pkg of this.options.init_import || []) {
