@@ -547,6 +547,9 @@ class CoqPkgInfo {
             return await req.json();
     }
 
+    /** @todo move here set-info logic from `CoqManager.addBundleInfo`, 
+      * and invoke from `fetchInfo` */
+
     setArchive(resource = `${this.name}.coq-pkg`) {
         this.archive = new CoqPkgArchive(this.getUrl(resource));
     }

@@ -44,6 +44,10 @@ class CoqDep {
         var deps = [...this._extractImports(v_text)];
         if (deps.length > 0)
             this.deps.push({from: mod, to: deps});
+        this.processExplicit(deps);
+    }
+
+    processExplicit(deps: SearchPathElement[]) {
         for (let pkg of this._getExtern(deps))
             this.extern.add(pkg);
     }

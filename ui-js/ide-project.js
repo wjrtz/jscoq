@@ -42,10 +42,13 @@ class ProjectPanel {
     open(project) {
         this.project = project;
         this.view.status = {};
-        this.view.$refs.file_list.populate(
+        this.view.$refs.fileList.populate(
             [...project.modulesByExt('.v')].map(mod => mod.physical));
-        this.view.$refs.file_list.collapseAll();
-        requestAnimationFrame(() => this.view.$refs.file_list.collapseAll());
+        this.view.$refs.fileList.collapseAll();
+        requestAnimationFrame(() => {
+            this.view.$refs.fileList.collapseAll();
+            this.view.$refs.fileList.expandAll(1);
+        });
 
         if (this.editor_provider) this._associateStore();
     }
@@ -131,7 +134,7 @@ class ProjectPanel {
     openFile(filename) {
         this.config.setLastFile(this.project, filename);
         requestAnimationFrame(() =>
-            this.view.$refs.file_list.select(filename));
+            this.view.$refs.fileList.select(filename));
         if (this.editor_provider)
             this.editor_provider.openLocal(filename);
         if (this.report)
@@ -268,7 +271,7 @@ class ProjectPanel {
     }
 
     _update(status) {
-        var flist = this.view.$refs.file_list;
+        var flist = this.view.$refs.fileList;
         for (let fe of flist.iter()) {
             var filename = `/${fe.path.join('/')}`,
                 fstatus = status[filename];
@@ -310,7 +313,7 @@ class ProjectPanel {
             break;
         case 'create':
             if (ev.kind === 'file')
-                return this.addFile(`/${ev.path.join('/')}`, '')
+                return this.addFile(`/${ev.path.join('/')}`, ev.content)
             break;
         }
     }
@@ -321,6 +324,8 @@ class ProjectPanel {
 
         if (name == 'sample')
             panel.open(ProjectPanel.sample());
+        else
+            panel.clear();
 
         panel.restore(!name);
         return panel;
@@ -447,6 +452,7 @@ class JsCoqBatchWorker extends BatchWorker {
     }
 
     docOpts(mod, outfn) {
+        /* @todo this will not work with 8.14 because load path is set at init */
         this.loadpath.push([mod.logical.slice(0, -1), ['/lib']]);    
         return super.docOpts(mod, outfn);
     }
@@ -476,6 +482,7 @@ class WacoqBatchWorker extends BatchWorker {
             msg => msg[0] == 'LoadedPkg'
         );
         this.loadpath = [this.coqw.worker.packages ? this.coqw.worker.packages.dir : '/lib'];
+        console.log(this.loadpath);
     }
 
     getURIs(pkgs) {
@@ -483,11 +490,6 @@ class WacoqBatchWorker extends BatchWorker {
             var p = this.pkgr.getPackage(pkg);  /**/ assert(p); /**/
             return p.getDownloadURL().href;
         });
-    }
-
-    docOpts(mod, outfn) {
-        return { top_name: outfn, mode: ['Vo'], 
-                 lib_init: ["Coq.Init.Prelude"], lib_path: this.loadpath };
     }
 
     async install(mod, volume, root, outfn, compiledfn, content) {
@@ -512,8 +514,9 @@ class BuildReport {
     add(e, mod) {
         switch (e[0]) {
         case 'CoqExn':
-            var err = this.decorateError(e, mod);
-            coq.layout.log(err.msg, 'Error');   // oops
+            var err = this.decorateError(e, mod),
+                item = coq.layout.log(err.msg, 'Error');   // oops
+            this.pprint.adjustBreaks(item);
             if (mod) {
                 this.errors.set(mod.physical,
                     (this.errors.get(mod.physical) || []).concat([err]));
@@ -544,7 +547,7 @@ class BuildReport {
         var at =
             `${err.loc.filename}:${err.loc.start ? err.loc.start.line + 1 : '?'}`
         err.msg = $('<p>').text(`at ${at}:`).addClass('error-location')
-                  .add(this.pprint.pp2DOM(msg));  // oops
+                  .add(this.pprint.msg2DOM(msg));
         return err;
     }
 

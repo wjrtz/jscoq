@@ -101,10 +101,20 @@ class CoqProject {
         );
     }
 
-    computeDeps() {
+    _spFromLogicals(mods: (string | string[] | SearchPathElement)[]) {
+        return mods.map(mod =>
+            (typeof mod === 'string' || Array.isArray(mod))
+                ? {volume: this.volume, physical: null,
+                   logical: this.toDirPath(<any>mod)}
+                : mod
+        );
+    }
+
+    computeDeps(init: (string | string[] | SearchPathElement)[] = []) {
         var coqdep = new CoqDep();
         coqdep.searchPath = this.searchPath;
 
+        coqdep.processExplicit(this._spFromLogicals(init));
         coqdep.processModules(this.modules());
         return coqdep;
     }
@@ -372,7 +382,7 @@ class SearchPath {
             if (matches(mod.logical)) yield mod;
     }
 
-    *_findExtern(prefix: string | string[], name: string | string[], exact=false) {
+    *_findExtern(prefix: string | string[], name: string | string[], exact=false): Generator<SearchPathElement> {
         if (this.packageIndex) {
             for (let k of this.packageIndex.findModules(prefix, name, exact))
                 yield {volume: null, physical: null, logical: k.split('.'), pkg: '+'};
