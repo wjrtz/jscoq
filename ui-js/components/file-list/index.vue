@@ -212,17 +212,20 @@ export default {
             e.name = to;
         },
 
-        collapseAll() {
-            for (let e of this.$refs.entries || []) {
-                if (e.$data.hasOwnProperty('_collapsed'))
-                    e.$data._collapsed = true;
-            }
+        collapseAll(max_depth = 99) {
+            this._collapseRec(true, max_depth);
         },
         expandAll(max_depth = 10) {
+            this._collapseRec(false, max_depth);
+        },
+
+        _collapseRec(value, max_depth) {
             if (max_depth <= 0) return;
             for (let e of this.$refs.entries || []) {
                 if (e.$data.hasOwnProperty('_collapsed'))
-                    e.$data._collapsed = false;
+                    e.$data._collapsed = value;
+                if (e.$refs.l)
+                    e.$refs.l._collapseRec(value, max_depth - 1);
             }
         },
 

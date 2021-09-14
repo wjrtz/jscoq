@@ -7,7 +7,7 @@
                 {{building ? 'stop' : 'build'}}</button>
             <project-build-status :building="building"/>
         </div>
-        <file-list ref="file_list" :files="files" @action="fileAction"/>
+        <file-list ref="fileList" :files="files" @action="fileAction"/>
         <project-file-context-menu ref="fileMenu"
             @action="fileMenuAction"/>
     </div>
@@ -25,6 +25,9 @@ export default {
     methods: {
         fileAction(action) {
             switch (action.type) {
+            case 'create':
+                this.$refs.fileList.create(action.path, action.kind);
+                break;
             case 'menu':
                 action.$event.preventDefault();
                 this.$refs.fileMenu.open(action.$event, action);
@@ -41,15 +44,15 @@ export default {
             }
         },
         create(at, name, kind) {
-            var newPath = this.$refs.file_list.freshName(at, name);
-            this.$refs.file_list.create(newPath, kind);
+            var newPath = this.$refs.fileList.freshName(at, name);
+            this.$refs.fileList.create(newPath, kind);
             setTimeout(() => {
-                this.$refs.file_list.renameStart(newPath);
+                this.$refs.fileList.renameStart(newPath);
             });
             this.$emit('action', {type: 'create', path: newPath, kind});
         },
         renameStart(path) {
-            this.$refs.file_list.renameStart(path);
+            this.$refs.fileList.renameStart(path);
         },
         _folderOf(action) {
             return action.kind === 'folder' ? 

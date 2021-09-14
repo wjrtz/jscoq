@@ -40,12 +40,12 @@ abstract class Batch {
     }
 
     async init() {
-        await this.do(['Init', {}]);
+        await this.do(['Init', {lib_path: this.loadpath}]);
     }
 
     docOpts(mod: SearchPathElement, outfn: string) {
         return { top_name: outfn, mode: ['Vo'], 
-                 lib_init: PRELUDE, lib_path: this.loadpath };
+                 lib_init: PRELUDE };
     }
 
     async install(mod: SearchPathElement, volume: FSInterface, root: string, outfn: string, compiledfn: string, content?: Uint8Array) {
@@ -109,8 +109,12 @@ class CompileTask extends EventEmitter {
     async run(outname?: string) {
         if (this._stop) return;
 
-        var coqdep = this.inproj.computeDeps(),
+        var coqdep = this.inproj.computeDeps(PRELUDE),
             plan = coqdep.buildOrder();
+
+        // This is unfortunately needed before the worker is initialized
+        // in order to set up the root state loadpath
+        this.createDirectories(this.inproj.searchPath.path);
 
         await this.batch.loadPackages(coqdep.extern);
         await this.batch.init();
@@ -122,6 +126,15 @@ class CompileTask extends EventEmitter {
         }
     
         return this.output(outname);
+    }
+
+    createDirectories(dirs: SearchPathElement[], opts=this.opts) {
+        var root = opts.buildDir || '/lib';
+        for (let dir of dirs) {
+            this.batch.do(
+                ['Put', `${path.join(root, ...dir.logical)}/_v`, '']
+            );
+        }
     }
 
     alreadyDone(modules: SearchPathElement[]) {
